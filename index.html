@@ -92,8 +92,7 @@
     <script>
       let sTotal = 0;
       let eTotal = 0;
-      let lastType = "";
-      let lastValue = 0;
+      let history = [];
 
       function render() {
         document.getElementById("s").textContent = sTotal;
@@ -118,16 +117,14 @@
       function save() {
         localStorage.setItem("sTotal", sTotal);
         localStorage.setItem("eTotal", eTotal);
-        localStorage.setItem("lastType", lastType);
-        localStorage.setItem("lastValue", lastValue);
+        localStorage.setItem("history", JSON.stringify(history));
         localStorage.setItem("dayKey", getDayKey());
       }
 
       function load() {
         sTotal = Number(localStorage.getItem("sTotal")) || 0;
         eTotal = Number(localStorage.getItem("eTotal")) || 0;
-        lastType = localStorage.getItem("lastType") || "";
-        lastValue = Number(localStorage.getItem("lastValue")) || 0;
+        history = JSON.parse(localStorage.getItem("history")) || [];
       }
 
       function resetIfNeeded() {
@@ -142,8 +139,7 @@
         if (savedDayKey !== currentDayKey) {
           sTotal = 0;
           eTotal = 0;
-          lastType = "";
-          lastValue = 0;
+          history = [];
           save();
         }
 
@@ -151,28 +147,30 @@
       }
 
       function add(type, value) {
-        lastType = type;
-        lastValue = value;
-
         if (type === "S") {
           sTotal += value;
         } else if (type === "E") {
           eTotal += value;
         }
 
+        history.push({ type, value });
+
         save();
         render();
       }
 
       function undo() {
-        if (lastType === "S") {
-          sTotal -= lastValue;
-        } else if (lastType === "E") {
-          eTotal -= lastValue;
+        if (history.length === 0) {
+          return;
         }
 
-        lastType = "";
-        lastValue = 0;
+        const last = history.pop();
+
+        if (last.type === "S") {
+          sTotal -= last.value;
+        } else if (last.type === "E") {
+          eTotal -= last.value;
+        }
 
         save();
         render();
